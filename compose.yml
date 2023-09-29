@@ -1,0 +1,33 @@
+services:
+  nginx-proxy:
+    container_name: oauth-apisample-python-nginx
+    build: nginx
+    restart: always
+    volumes:
+      - ./nginx/default.conf:/tmp/default.conf
+    environment: 
+      - FLASK_SERVER_ADDR=flask-app:9998
+    ports:
+      - "80:80"
+    depends_on:
+      - flask-app
+    healthcheck:
+      test: ["CMD-SHELL", "curl --silent --fail localhost:80/health-check || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+    command: /app/start.sh
+  flask-app:
+    container_name: oauth-apisample-python-flask
+    build: .
+    restart: always
+    environment: 
+      - FLASK_SERVER_PORT=9998
+    ports: 
+      - '9998:9998'
+    healthcheck:
+      test: ["CMD-SHELL", "curl --silent --fail localhost:9998/health || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+    command: poetry run gunicorn --workers=3 --timeout 60 --bind=0.0.0.0:9998 oauth_apisample_python.app:app

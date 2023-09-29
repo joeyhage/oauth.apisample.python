@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "oauth-apisample-python"
+version = "0.1.0"
+description = ""
+license = "MIT"
+authors = ["Joey Hage <jhage@dwolla.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+Flask = "^2.3.3"
+PyJWT = "^2.8.0"
+urllib3 = "^2.0.5"
+gunicorn = "^21.2.0"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.9.1"
+mypy = "^1.5.1"
+
+[tool.black]
+line-length = 80
+target-version = ['py310']
+include = '\.py$'
+
+[tool.mypy]
+strict = true
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
