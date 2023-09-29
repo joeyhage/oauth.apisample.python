@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "python",
+      "request": "launch",
+      "name": "oauth.apisample.python Flask app",
+      "program": "oauth_apisample_python/app.py",
+      "env": { "LOG_LEVEL": "DEBUG", "DEBUG": "true" },
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
