@@ -1,45 +1,48 @@
-from datetime import datetime
 import os
 import typing as t
-from flask import Flask, Response, jsonify
-from werkzeug.exceptions import HTTPException
-from werkzeug.serving import WSGIRequestHandler, _log  # type: ignore[attr-defined]
-from logging.config import dictConfig
 
-dictConfig(
-    {
-        "version": 1,
-        "formatters": {
-            "default": {
-                "format": f"[%(asctime)s | log_level=%(levelname)s | log_logger=%(name)s | log_message='%(message)s'",
-            }
-        },
-        "handlers": {
-            "wsgi": {
-                "class": "logging.StreamHandler",
-                "stream": "ext://flask.logging.wsgi_errors_stream",
-                "formatter": "default",
-            }
-        },
-        "root": {
-            "level": os.environ.get("LOG_LEVEL") or "INFO",
-            "handlers": ["wsgi"],
-        },
-    }
-)
+from authlib.integrations.flask_oauth2 import ResourceProtector  # type: ignore[import]
+from datetime import datetime
+from dotenv import load_dotenv
+from flask import Flask, Response, jsonify
+from logging.config import dictConfig
+from werkzeug.exceptions import HTTPException
+from werkzeug.serving import WSGIRequestHandler
+
+from .auth.validator import init_auth
+from .config import LOGGING_CONFIG
+
+load_dotenv()
+
+dictConfig(LOGGING_CONFIG)
+
+issuer = os.environ.get("OAUTH_ISSUER")
+require_auth: ResourceProtector | None = None
+if issuer:
+    require_auth = init_auth(issuer, os.environ.get("OAUTH_AUDIENCE"))
 
 app = Flask("oauth.apisample.python", static_folder=None)
+
+with app.app_context():
+    from .controller.company_controller import CompanyController
+
+    base_path = "/investments"
+
+    company_controller = CompanyController(require_auth)
+    app.register_blueprint(
+        company_controller.blueprint,
+        url_prefix=f"{base_path}{company_controller.route}",
+    )
+    app.logger.debug(f"Registered {base_path}{company_controller.route}")
 
 
 @app.get("/health")
 def health() -> Response:
+    ts = datetime.now().astimezone().replace(microsecond=0).isoformat()
     return jsonify(
         {
             "healthy": True,
-            "timestamp": datetime.now()
-            .astimezone()
-            .replace(microsecond=0)
-            .isoformat(),
+            "timestamp": ts,
         }
     )
 
@@ -61,7 +64,11 @@ def add_headers(response: Response) -> Response:
 def handle_http_exception(e: HTTPException) -> t.Tuple[str, int]:
     code = e.code or 500
     app.logger.error(
-        "%s HTTPException. statusCode=%d", e.name, code, exc_info=e
+        "%s HTTPException. statusCode=%d",
+        e.name,
+        code,
+        exc_info=e,
+        stacklevel=0,
     )
     if e.code:
         return e.name, code

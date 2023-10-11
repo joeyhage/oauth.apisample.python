@@ -2,12 +2,11 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "oauth.apisample.python Flask app",
       "type": "python",
       "request": "launch",
-      "name": "oauth.apisample.python Flask app",
-      "program": "oauth_apisample_python/app.py",
-      "env": { "LOG_LEVEL": "DEBUG", "DEBUG": "true" },
-      "cwd": "${workspaceFolder}"
+      "module": "oauth_apisample_python.app",
+      "env": { "LOG_LEVEL": "DEBUG", "DEBUG": "true", "FLASK_SERVER_PORT": "9998" },
     }
   ]
 }
